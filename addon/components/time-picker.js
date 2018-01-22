@@ -227,14 +227,14 @@ export default Component.extend(
      * @property {string}
      * @public
      */
-    noMatchesMessage: "No matching time found",
+    noMatchesMessage: 'No matching time found',
 
     /**
      *  Text to show when no time has been selected.
      *  @property {string}
      *  @public
      */
-    placeholder: "",
+    placeholder: '',
 
     /**
      * When truthy, the list of options will be rendered in place instead of being attached to the root of the body and
@@ -279,7 +279,7 @@ export default Component.extend(
      * @property {string}
      * @public
      */
-    triggerId: "",
+    triggerId: '',
 
     /*****************************************
      * END: Power-select property pass-through
@@ -288,8 +288,7 @@ export default Component.extend(
     /**
      * This fires prior to inserting the component into the DOM
      */
-    init()
-    {
+    init() {
       this._super(...arguments);
 
       // Cache properties we will be working with.
@@ -298,8 +297,6 @@ export default Component.extend(
       let endTimeHour = this.get('endTimeHour');
       let times = this.get('times');
       let military = this.get('military');
-      let selectedTime = this.get('selectedTime');
-      selectedTime = (typeof selectedTime === 'undefined' || selectedTime === null) ? null : selectedTime;
 
       // If increment, startTimeHour, or endTimeHour is set then we calculate the times array.
       if (increment !== null || startTimeHour !== null || endTimeHour !== null) {
@@ -345,7 +342,7 @@ export default Component.extend(
         // Calculate the times[]
         times = [];
         for (let hour = startTimeHour; hour <= endTimeHour; hour++) {
-          let amPm = "";
+          let amPm = '';
           let actualHour = this.zeroPad(hour, 2);
 
           // If NOT using military time then include AM/PM and change the actualHour to modulo 12 and drop leading zeros.
@@ -356,7 +353,7 @@ export default Component.extend(
           }
 
           let minutes = 0;
-          while (minutes <=59) {
+          while (minutes <= 59) {
             // Push the calculated time into the array.
             times.push(actualHour + ':' + this.zeroPad(minutes, 2) + amPm);
 
@@ -375,68 +372,80 @@ export default Component.extend(
 
       assert('time-picker: The times property must be a string array with at least one element.',
         times.length !== 0 && typeof times[0] === 'string');
+    },
 
-      // Is defaultTimeToNow true and the selectedTime not set?
-      if (selectedTime === null && this.get('defaultTimeToNow') === true) {
+    didRenderForTheFirstTime: false,
+    didRender() {
+      this._super(...arguments);
+
+      if (!this.get('didRenderForTheFirstTime')) {
+        this.set('didRenderForTheFirstTime', true);
+
+        let military = this.get('military');
+        let times = this.get('times');
+        let selectedTime = this.get('selectedTime');
+        selectedTime = (typeof selectedTime === 'undefined' || selectedTime === null) ? null : selectedTime;
+        // Is defaultTimeToNow true and the selectedTime not set?
+        if (selectedTime === null && this.get('defaultTimeToNow') === true) {
         // Get a Date object set to "now"
-        let time = new Date();
+          let time = new Date();
 
-        // Get the minutes value for "now"
-        let minutes = time.getMinutes();
+          // Get the minutes value for "now"
+          let minutes = time.getMinutes();
 
-        // Prevent an endless loop with this flag.
-        let minuteFlag = false;
+          // Prevent an endless loop with this flag.
+          let minuteFlag = false;
 
-        /**
+          /**
          * Look for a valid time in the times array and adjust minutes until we find one
          * or set it to null if no match found.
          */
-        while(!times.includes(this.getFormattedTime(time, military))) {
-          minutes++;
-          if (minutes > 59) {
-            minutes = 0;
-            if (!minuteFlag) {
-              minuteFlag = true;
+          while (!times.includes(this.getFormattedTime(time, military))) {
+            minutes++;
+            if (minutes > 59) {
+              minutes = 0;
+              if (!minuteFlag) {
+                minuteFlag = true;
 
-              // Try incrementing the hour by one % 24 (because of the minuteFlag we only do this once).
-              let hours = time.getHours();
-              if (hours < 24) {
-                time.setHours(++hours);
+                // Try incrementing the hour by one % 24 (because of the minuteFlag we only do this once).
+                let hours = time.getHours();
+                if (hours < 24) {
+                  time.setHours(++hours);
+                } else {
+                  time.setHours(0);
+                }
               } else {
-                time.setHours(0);
+                break;
               }
-            } else {
-              break;
             }
+            time.setMinutes(minutes);
           }
-          time.setMinutes(minutes);
-        }
 
-        // Was a valid time of "now" in the times array?
-        if (time !== null && times.includes(this.getFormattedTime(time, military))) {
+          // Was a valid time of "now" in the times array?
+          if (time !== null && times.includes(this.getFormattedTime(time, military))) {
           // Since we calculated the selectedTime we fake an onchange action to bubble up the event.
-          this.send('onchange', this.getFormattedTime(time, military));
-        } else {
-          warn('time-picker: Unable to set default time', {"id" : "ember-power-timepicker"});
+            this.send('onchange', this.getFormattedTime(time, military));
+          } else {
+            warn('time-picker: Unable to set default time', {'id' : 'ember-power-timepicker'});
+          }
         }
-      }
 
-      // If allowClear is false and selectedTime is null then default selectedTime to times[0].
-      if (selectedTime === null && this.get('allowClear') === false) {
-        this.send('onchange', times[0]);
-      }
+        // If allowClear is false and selectedTime is null then default selectedTime to times[0].
+        if (selectedTime === null && this.get('allowClear') === false) {
+          this.send('onchange', times[0]);
+        }
 
-      // If the selectedTime is not null warn if the selectedTime is not in the times[] array.
-      if (selectedTime !== null) {
-        warn('time-picker: Invalid selectedTime: ' + selectedTime, times.includes(selectedTime), {"id" : "ember-power-timepicker"});
+        // If the selectedTime is not null warn if the selectedTime is not in the times[] array.
+        if (selectedTime !== null) {
+          warn('time-picker: Invalid selectedTime: ' + selectedTime, times.includes(selectedTime), {'id' : 'ember-power-timepicker'});
+        }
       }
     },
 
     /**
      * This fires when the component is inserted into the DOM.
      */
-    didInsertElement()
-    {
+    didInsertElement() {
       // If selectedTime is set/overridden/calculated we need to tell power-select about it.
       if (this.get('selectedTime') !== null) {
         // We can't do this in the init() because power-select has not been loaded into the DOM yet.
@@ -459,8 +468,7 @@ export default Component.extend(
      * @param {boolean} military Indicates if the formatted time should be military or not.
      * @returns {string} The date as a string in a "digital clock" format (ex: 12:08 PM, 3:14 AM) or in military time.
      */
-    getFormattedTime(date = null, military = false)
-    {
+    getFormattedTime(date = null, military = false) {
       assert('time-picker: Invalid type, the date argument must be either null or a Date type.',
         date === null || date instanceof Date);
 
@@ -499,8 +507,7 @@ export default Component.extend(
      * @param {string} timeString
      * @returns {int}
      */
-    hours(timeString)
-    {
+    hours(timeString) {
       if (typeof timeString !== 'string' || timeString.length === 0) {
         throw new TypeError('timeString must be a non-empty string.');
       }
@@ -512,7 +519,7 @@ export default Component.extend(
       }
 
       // Probably FF so we need to manually parse the timeString
-      for (let i = 0, c, temp = ""; i < timeString.length; i++) {
+      for (let i = 0, c, temp = ''; i < timeString.length; i++) {
         c = timeString.charAt(i);
 
         // When this is encountered then we know we have the hours part.
@@ -545,8 +552,7 @@ export default Component.extend(
      * @param {string} timeString
      * @returns {int | null}
      */
-    minutes(timeString)
-    {
+    minutes(timeString) {
       if (typeof timeString !== 'string' || timeString.length === 0) {
         throw new TypeError('timeString must be a non-empty string.');
       }
@@ -558,7 +564,7 @@ export default Component.extend(
       }
 
       // Probably FF so we need to manually parse the timeString
-      for (let i = 0, c, temp = ""; i < timeString.length; i++) {
+      for (let i = 0, c, temp = ''; i < timeString.length; i++) {
         c = timeString.charAt(i);
 
         // am, AM, A.M., a.m., pm, PM, P.M., or p.m. in the timeString? if so we're done.
@@ -591,7 +597,7 @@ export default Component.extend(
      */
     zeroPad(num, places) {
       let zero = places - num.toString().length + 1;
-      return new Array(+(zero > 0 && zero)).join("0") + num;
+      return new Array(+(zero > 0 && zero)).join('0') + num;
     },
 
     /**
@@ -608,8 +614,7 @@ export default Component.extend(
        * @param select
        * @param e
        */
-      onblur(select, e)
-      {
+      onblur(select, e) {
         this.sendAction('onblur', select, e);
       },
 
@@ -618,8 +623,7 @@ export default Component.extend(
        * Two-way binding is established by setting the selectedTime property when a new selection is made.
        * @param {string | null } timeString
        */
-      onchange(timeString)
-      {
+      onchange(timeString) {
         // Update the selectedTime.
         this.set('selectedTime', timeString);
 
@@ -631,8 +635,7 @@ export default Component.extend(
        * @param select
        * @param e
        */
-      onclose(select, e)
-      {
+      onclose(select, e) {
         this.sendAction('onclose', select, e);
       },
 
@@ -641,8 +644,7 @@ export default Component.extend(
        * @param select
        * @param e
        */
-      onfocus(select, e)
-      {
+      onfocus(select, e) {
         this.sendAction('onfocus', select, e);
       },
 
@@ -652,8 +654,7 @@ export default Component.extend(
        * @param select
        * @param e
        */
-      oninput(select, e)
-      {
+      oninput(select, e) {
         this.sendAction('oninput', select, e);
       },
 
@@ -662,9 +663,8 @@ export default Component.extend(
        * @param dropdown
        * @param e
        */
-      onkeydown(dropdown, e)
-      {
-        this.sendAction("onkeydown", dropdown, e);
+      onkeydown(dropdown, e) {
+        this.sendAction('onkeydown', dropdown, e);
       },
 
       /**
@@ -672,9 +672,8 @@ export default Component.extend(
        * @param select
        * @param e
        */
-      onopen(select, e)
-      {
+      onopen(select, e) {
         this.sendAction('onopen', select, e);
       }
     }
-});
+  });
