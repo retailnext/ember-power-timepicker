@@ -40,7 +40,7 @@ test('it doesn\'t call "onchange" during the initial render', function(assert) {
 
   this.render(hbs`
     <div no-error="{{noError}}">
-      {{time-picker class="{{classBinding}}" onchange=(action onchange)}}
+      {{time-picker onchange=(action onchange)}}
     </div>
   `);
 
